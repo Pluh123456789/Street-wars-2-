@@ -1,0 +1,175 @@
+--// Services
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+
+--// UI Library (Orion)
+local UILibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/IsmDev/Orion/main/source"))()
+
+-- Create the UI Window
+local Window = UILibrary:MakeWindow({
+    Name = "Street Wars 2 Hub | Script",
+    HideUI = false,
+})
+
+--// Tabs and Buttons
+local MainTab = Window:MakeTab({
+    Name = "Main Features"
+})
+
+local TeleportTab = Window:MakeTab({
+    Name = "Teleport"
+})
+
+--// Functions for Main Features
+
+-- Auto Farm Toggle
+local AutoFarm = false
+MainTab:AddToggle({
+    Name = "Auto Farm",
+    Default = false,
+    Callback = function(value)
+        AutoFarm = value
+        if AutoFarm then
+            print("Auto Farm Enabled")
+            -- Add logic for auto farming (e.g., collecting items, attacking NPCs)
+        else
+            print("Auto Farm Disabled")
+        end
+    end
+})
+
+-- Infinite Ammo Button
+MainTab:AddButton({
+    Name = "Infinite Ammo",
+    Callback = function()
+        for _, tool in ipairs(LocalPlayer.Backpack:GetChildren()) do
+            if tool:IsA("Tool") and tool:FindFirstChild("Ammo") then
+                tool.Ammo.Value = math.huge
+            end
+        end
+        print("Infinite Ammo Enabled")
+    end
+})
+
+-- One Punch Kill (for fun, make sure it's within rules)
+MainTab:AddButton({
+    Name = "One Punch Kill",
+    Callback = function()
+        -- Logic for killing other players with one punch
+        -- (use with caution and respect the rules of the game)
+        for _, target in ipairs(Players:GetPlayers()) do
+            if target ~= LocalPlayer then
+                -- Apply a quick health reduction (just as a fun example)
+                if target.Character and target.Character:FindFirstChild("Humanoid") then
+                    target.Character.Humanoid.Health = 0
+                end
+            end
+        end
+        print("One Punch Kill Activated")
+    end
+})
+
+-- **Godmode Toggle**
+local GodModeEnabled = false
+MainTab:AddToggle({
+    Name = "Enable Godmode",
+    Default = false,
+    Callback = function(value)
+        GodModeEnabled = value
+        if GodModeEnabled then
+            -- Enable Godmode by making the player's humanoid invincible
+            local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+            if humanoid then
+                humanoid.Health = humanoid.Health  -- Keeps health at max
+                humanoid.MaxHealth = math.huge   -- Set maximum health to a huge number
+                humanoid.HealthChanged:Connect(function()
+                    if humanoid.Health < humanoid.MaxHealth then
+                        humanoid.Health = humanoid.MaxHealth  -- Restore health if it decreases
+                    end
+                end)
+                -- Prevent damage from being dealt
+                LocalPlayer.Character.Humanoid.Died:Connect(function()
+                    -- Prevent player from dying (essentially godmode)
+                    print("Player cannot die in Godmode")
+                    humanoid.Health = humanoid.MaxHealth  -- Reset health to max on death
+                end)
+                print("Godmode Enabled")
+            end
+        else
+            -- Disable Godmode
+            local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+            if humanoid then
+                humanoid.MaxHealth = 100  -- Reset max health to default
+                humanoid.Health = humanoid.Health  -- Restore original health
+                print("Godmode Disabled")
+            end
+        end
+    end
+})
+
+--// Teleportation Functionality
+
+-- Simple teleport options (for example: spawn, safe zone)
+TeleportTab:AddDropdown({
+    Name = "Select Location",
+    Options = {"Spawn", "Gun Store", "Safe Zone"},
+    Callback = function(Location)
+        local Locations = {
+            ["Spawn"] = Vector3.new(0, 10, 0),  -- Update with real spawn location
+            ["Gun Store"] = Vector3.new(50, 10, 100),  -- Example
+            ["Safe Zone"] = Vector3.new(-50, 10, -50),  -- Example
+        }
+        if Locations[Location] then
+            LocalPlayer.Character:MoveTo(Locations[Location])
+            print("Teleported to " .. Location)
+        end
+    end
+})
+
+--// ESP Functionality (Simple Box ESP)
+local function EnableESP()
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local ESPBox = Instance.new("BoxHandleAdornment")
+            ESPBox.Adornee = player.Character:FindFirstChild("HumanoidRootPart")
+            ESPBox.Size = Vector3.new(4, 6, 4)
+            ESPBox.Color3 = Color3.new(1, 0, 0)  -- Red box for enemy players
+            ESPBox.AlwaysOnTop = true
+            ESPBox.ZIndex = 5
+            ESPBox.Transparency = 0.5
+            ESPBox.Parent = player.Character
+        end
+    end
+end
+
+-- Enable ESP Button
+MainTab:AddButton({
+    Name = "Enable ESP",
+    Callback = function()
+        EnableESP()
+        print("ESP Enabled")
+    end
+})
+
+--// Settings Tab for Hub Controls
+
+local SettingsTab = Window:MakeTab({
+    Name = "Settings"
+})
+
+-- Button to Unload Hub
+SettingsTab:AddButton({
+    Name = "Unload Hub",
+    Callback = function()
+        Window:Destroy()
+        print("Street Wars 2 Hub Unloaded")
+    end
+})
+
+-- Credits and Author Info
+SettingsTab:AddLabel({
+    Name = "Created by Cayo"
+})
